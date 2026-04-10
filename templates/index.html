@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnePage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#ec4899',
+                        accent: '#06b6d4',
+                        dark: '#0f172a',
+                        'dark-light': '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .bg-gradient-radial {
+            background: radial-gradient(circle at center, var(--tw-gradient-stops));
+        }
+        .animate-delay-100 { animation-delay: 100ms; }
+        .animate-delay-200 { animation-delay: 200ms; }
+        .animate-delay-300 { animation-delay: 300ms; }
+        .animate-delay-400 { animation-delay: 400ms; }
+        .animate-delay-500 { animation-delay: 500ms; }
+
+        /* Zen Mode 样式 */
+        body.zen-mode .zen-hidden {
+            display: none !important;
+        }
+        body.zen-mode #zenModeBtn {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        body.zen-mode #zenModeBtn .zen-icon {
+            color: white;
+            transform: rotate(180deg);
+        }
+        body.zen-mode #zenModeBtn .zen-icon path {
+            d: path("M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z");
+        }
+        body.zen-mode main {
+            justify-content: center;
+        }
+        body.zen-mode .search-section {
+            margin-top: 0;
+        }
+        #zenModeBtn .zen-icon {
+            transition: transform 0.3s ease;
+        }
+
+        /* Zen Mode 壁纸清晰显示 */
+        body.zen-mode .wallpaper {
+            opacity: 0.7 !important;
+            filter: blur(0px) !important;
+            transform: scale(1.05);
+        }
+        body.zen-mode .bg-gradient-to-br {
+            opacity: 0.3 !important;
+        }
+
+        /* 清晰壁纸模式 */
+        body.clear-wallpaper .wallpaper {
+            opacity: 0.8 !important;
+            filter: blur(0px) !important;
+            transform: scale(1.05);
+        }
+        body.clear-wallpaper .bg-gradient-to-br {
+            opacity: 0.5 !important;
+        }
+        body.clear-wallpaper #wallpaperModeBtn {
+            background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        body.clear-wallpaper #wallpaperModeBtn svg {
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white min-h-screen relative overflow-x-hidden">
+    <!-- 动态背景 -->
+    <div class="fixed inset-0 z-0">
+        <div class="wallpaper absolute inset-0 bg-cover bg-center opacity-20"
+             style="background-image: url('{{ wallpaper_url }}'); filter: blur(60px);"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-dark via-dark-light to-dark opacity-90"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+    </div>
+
+    <!-- 浮动装饰球 -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-0 -left-4 w-72 h-72 bg-primary/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute top-0 -right-4 w-72 h-72 bg-secondary/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-accent/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- 主内容 -->
+    <main class="relative z-10 min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 animate-fade-in">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/30">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">OnePage</span>
+                </div>
+
+                <!-- 时区显示 -->
+                <div class="flex flex-wrap justify-center gap-3 sm:gap-4 animate-fade-in animate-delay-100" id="timezone-container">
+                    {% for tz in timezones %}
+                    <div class="glass rounded-2xl px-4 py-2 sm:px-5 sm:py-3 flex flex-col items-center {% if tz.is_primary %}ring-2 ring-primary/50 shadow-lg shadow-primary/20{% endif %} hover:scale-105 transition-transform duration-300"
+                         data-tz="{{ tz.tz }}"
+                         data-primary="{{ tz.is_primary }}">
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">{{ tz.name }}</span>
+                        <span class="text-lg sm:text-xl font-mono font-semibold tz-time {% if tz.is_primary %}text-primary{% else %}text-white{% endif %}"
+                              data-time="{{ tz.time }}">{{ tz.time }}</span>
+                        <span class="text-xs text-gray-500">{{ tz.date }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Zen 模式切换按钮 -->
+                <div class="flex items-center gap-2">
+                    <!-- 壁纸清晰度切换 -->
+                    <button id="wallpaperModeBtn" class="glass rounded-full p-3 hover:bg-white/10 transition-all duration-300 group relative" title="切换壁纸清晰度">
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="absolute top-full mt-2 right-0 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">清晰壁纸</span>
+                    </button>
+
+                    <!-- Zen 模式 -->
+                    <button id="zenModeBtn" class="glass rounded-full p-3 hover:bg-white/10 transition-all duration-300 group relative" title="Zen Mode (Z)">
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors zen-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <span class="absolute top-full mt-2 right-0 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Zen Mode</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 搜索区域 -->
+        <section class="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 search-section">
+            <div class="w-full max-w-3xl animate-slide-up">
+                <!-- 搜索卡片 -->
+                <div class="glass rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/50 hover:shadow-primary/10 transition-shadow duration-500">
+                    <!-- 搜索引擎选择 -->
+                    <div class="flex flex-wrap justify-center gap-2 mb-6 zen-hidden">
+                        {% for engine in search_engines %}
+                        <button class="engine-btn px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 {% if engine.default %}bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30 scale-105{% else %}glass text-gray-300 hover:text-white hover:bg-white/10{% endif %}"
+                                data-url="{{ engine.url }}">
+                            {{ engine.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 搜索输入 -->
+                    <div class="relative">
+                        <input type="text"
+                               id="searchInput"
+                               class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 sm:py-5 text-lg sm:text-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all duration-300"
+                               placeholder="Search the web...">
+                        <button id="searchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center hover:scale-110 hover:shadow-lg hover:shadow-primary/50 transition-all duration-300">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 快捷键提示 -->
+                    <div class="flex flex-wrap justify-center gap-4 mt-4 text-xs text-gray-500 zen-hidden">
+                        <span class="flex items-center gap-1">
+                            <kbd class="px-2 py-1 rounded bg-white/10 text-gray-300">/</kbd>
+                            <span>focus</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <kbd class="px-2 py-1 rounded bg-white/10 text-gray-300">↵</kbd>
+                            <span>search</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <kbd class="px-2 py-1 rounded bg-white/10 text-gray-300">Z</kbd>
+                            <span>zen</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <kbd class="px-2 py-1 rounded bg-white/10 text-gray-300">W</kbd>
+                            <span>wallpaper</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷链接 -->
+            <div class="w-full max-w-6xl mt-8 sm:mt-12 zen-hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {% for category in categories %}
+                    <div class="glass rounded-2xl p-5 sm:p-6 animate-slide-up animate-delay-{{ loop.index * 100 }} hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group">
+                        <!-- 分类标题 -->
+                        <div class="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">
+                                {{ category.icon }}
+                            </div>
+                            <h3 class="text-lg font-semibold text-white">{{ category.name }}</h3>
+                        </div>
+
+                        <!-- 链接列表 -->
+                        <ul class="space-y-2">
+                            {% for link in category.links %}
+                            <li>
+                                <a href="{{ link.url }}" target="_blank" rel="noopener"
+                                   class="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-200 group/link">
+                                    <span class="text-lg group-hover/link:scale-110 transition-transform duration-200">{{ link.icon }}</span>
+                                    <span class="flex-1 text-sm font-medium truncate">{{ link.name }}</span>
+                                    <svg class="w-4 h-4 opacity-0 group-hover/link:opacity-100 transform translate-x-2 group-hover/link:translate-x-0 transition-all duration-200 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- 页脚 -->
+        {% if wallpaper_copyright %}
+        <footer class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 zen-hidden">
+            <div class="max-w-7xl mx-auto text-center">
+                <a href="{{ wallpaper_copyright_link }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors duration-300">
+                    <span class="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-secondary animate-pulse"></span>
+                    <span>{{ wallpaper_copyright }}</span>
+                </a>
+            </div>
+        </footer>
+        {% endif %}
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
