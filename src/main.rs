@@ -10,7 +10,8 @@ use axum::{
     Router,
 };
 use clap::{Parser, Subcommand};
-use std::net::SocketAddr;
+use std::collections::HashMap;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -106,8 +107,15 @@ async fn run_server() -> anyhow::Result<()> {
     let config = config::Config::load()?;
     tracing::info!("Configuration loaded successfully");
 
+    // Resolve asset root so templates/static work regardless of the current
+    // working directory (set ONEPAGE_ASSET_DIR for deployments not launched
+    // from the project root). Defaults to "." to preserve existing behavior.
+    let asset_dir = std::env::var("ONEPAGE_ASSET_DIR").unwrap_or_else(|_| ".".to_string());
+    let template_glob = format!("{}/templates/**/*", asset_dir);
+    let static_dir = format!("{}/static", asset_dir);
+
     // Initialize Tera templates
-    let tera = match tera::Tera::new("templates/**/*") {
+    let mut tera = match tera::Tera::new(&template_glob) {
         Ok(t) => {
             tracing::info!("Templates loaded successfully");
             t
@@ -118,6 +126,21 @@ async fn run_server() -> anyhow::Result<()> {
         }
     };
 
+    // Sanitize URLs rendered into href attributes: only allow http(s), root-
+    // relative, or fragment links. Anything else (e.g. `javascript:`) collapses
+    // to "#" so config edited outside the CLI can't inject a scheme-based XSS.
+    tera.register_filter(
+        "safe_url",
+        |value: &tera::Value, _: &HashMap<String, tera::Value>| {
+            let s = value.as_str().unwrap_or("");
+            let safe = s.starts_with("http://")
+                || s.starts_with("https://")
+                || s.starts_with('/')
+                || s.starts_with('#');
+            Ok(tera::Value::String(if safe { s.to_string() } else { "#".to_string() }))
+        },
+    );
+
     // Create application state
     let app_state = Arc::new(AppState::new(config.clone(), tera)?);
 
@@ -126,11 +149,15 @@ async fn run_server() -> anyhow::Result<()> {
         .route("/", get(handlers::index_handler))
         .route("/api/wallpaper", get(handlers::wallpaper_api_handler))
         .route("/health", get(handlers::health_handler))
-        .nest_service("/static", ServeDir::new("static"))
+        .nest_service("/static", ServeDir::new(static_dir))
         .with_state(app_state);
 
-    // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.server.port));
+    // Start server — honor the configured host instead of hardcoding 0.0.0.0,
+    // so `host = "127.0.0.1"` actually binds loopback only.
+    let ip: IpAddr = config.server.host.parse().map_err(|e| {
+        anyhow::anyhow!("Invalid server host '{}': {}", config.server.host, e)
+    })?;
+    let addr = SocketAddr::new(ip, config.server.port);
     tracing::info!("Starting server on http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

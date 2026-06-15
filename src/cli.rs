@@ -30,7 +30,10 @@ pub struct CliHandler {
 impl CliHandler {
     pub fn new() -> Result<Self, CliError> {
         let config_path = std::env::var("CONFIG_PATH").unwrap_or_else(|_| "onepage.toml".to_string());
-        let config = Config::load().map_err(|e| CliError::ConfigError(e.to_string()))?;
+        // Load from file only (no env merge) so saving edits back doesn't
+        // persist transient ONEPAGE__* overrides into the TOML.
+        let config =
+            Config::load_from_file(&config_path).map_err(|e| CliError::ConfigError(e.to_string()))?;
         Ok(Self { config, config_path })
     }
 
@@ -103,9 +106,13 @@ impl CliHandler {
                     // 如果分类为空，询问是否删除
                     if cat.links.is_empty() {
                         print!("分类 '{}' 已为空，是否删除? [y/N] ", cat_name);
-                        io::stdout().flush().unwrap();
+                        io::stdout()
+                            .flush()
+                            .map_err(|e| CliError::IoError(e.to_string()))?;
                         let mut input = String::new();
-                        io::stdin().read_line(&mut input).unwrap();
+                        io::stdin()
+                            .read_line(&mut input)
+                            .map_err(|e| CliError::IoError(e.to_string()))?;
                         if input.trim().to_lowercase() == "y" {
                             self.config.categories.retain(|c| c.name != cat_name);
                             println!("✓ 已删除空分类 '{}'", cat_name);
@@ -140,7 +147,7 @@ impl CliHandler {
         }
 
         println!("\n{}", "━".repeat(60));
-        println!("{:<20} {:<30} {}", "分类", "链接名称", "URL");
+        println!("{:<20} {:<30} URL", "分类", "链接名称");
         println!("{}", "━".repeat(60));
 
         for cat in &self.config.categories {
@@ -186,7 +193,7 @@ impl CliHandler {
         }
 
         println!("\n{}", "━".repeat(40));
-        println!("{:<5} {:<20} {}", "图标", "分类名称", "链接数");
+        println!("{:<5} {:<20} 链接数", "图标", "分类名称");
         println!("{}", "━".repeat(40));
 
         for cat in &self.config.categories {
@@ -213,9 +220,14 @@ impl CliHandler {
 }
 
 fn truncate_url(url: &str, max_len: usize) -> String {
-    if url.len() <= max_len {
+    // Count/slice by chars, not bytes: a byte-index slice panics when it lands
+    // inside a multi-byte UTF-8 sequence (e.g. IDN domains or unicode queries),
+    // and `max_len - 3` would underflow for very small max_len.
+    if url.chars().count() <= max_len {
         url.to_string()
     } else {
-        format!("{}...", &url[..max_len-3])
+        let keep = max_len.saturating_sub(3);
+        let truncated: String = url.chars().take(keep).collect();
+        format!("{}...", truncated)
     }
 }

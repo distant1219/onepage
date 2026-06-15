@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::time::Duration;
+use tokio::sync::{Mutex, RwLock};
 
 #[derive(Debug, Clone, Deserialize)]
 struct BingImageResponse {
@@ -11,7 +12,6 @@ struct BingImageResponse {
 #[derive(Debug, Clone, Deserialize)]
 struct BingImage {
     url: String,
-    urlbase: String,
     copyright: String,
     copyrightlink: String,
     title: String,
@@ -25,31 +25,60 @@ pub struct WallpaperInfo {
     pub title: String,
 }
 
+/// Cached wallpaper paired with the time it was fetched.
+type WallpaperCache = Arc<RwLock<Option<(WallpaperInfo, DateTime<Utc>)>>>;
+
 pub struct BingWallpaperClient {
     market: String,
     client: reqwest::Client,
-    cached_wallpaper: Arc<RwLock<Option<(WallpaperInfo, DateTime<Utc>)>>>,
+    cached_wallpaper: WallpaperCache,
+    // Serializes upstream fetches so a cache miss under concurrency triggers a
+    // single Bing request (single-flight) instead of one per in-flight request.
+    fetch_lock: Arc<Mutex<()>>,
     refresh_interval_minutes: i64,
 }
 
 impl BingWallpaperClient {
     pub fn new(market: String, refresh_interval_minutes: u64) -> Self {
+        // Bound the upstream call so a slow/hung Bing API can't stall the
+        // homepage handler that awaits it on a cache miss.
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+
         Self {
             market,
-            client: reqwest::Client::new(),
+            client,
             cached_wallpaper: Arc::new(RwLock::new(None)),
+            fetch_lock: Arc::new(Mutex::new(())),
             refresh_interval_minutes: refresh_interval_minutes as i64,
         }
     }
 
+    fn cache_is_fresh(&self, cached_at: &DateTime<Utc>) -> bool {
+        Utc::now().signed_duration_since(*cached_at).num_minutes() < self.refresh_interval_minutes
+    }
+
     pub async fn get_wallpaper(&self) -> anyhow::Result<WallpaperInfo> {
-        // Check cache first
+        // Fast path: fresh cache, no lock contention.
         {
             let cache = self.cached_wallpaper.read().await;
             if let Some((wallpaper, cached_at)) = cache.as_ref() {
-                let elapsed = Utc::now().signed_duration_since(*cached_at);
-                if elapsed.num_minutes() < self.refresh_interval_minutes {
+                if self.cache_is_fresh(cached_at) {
                     tracing::debug!("Returning cached wallpaper");
+                    return Ok(wallpaper.clone());
+                }
+            }
+        }
+
+        // Cache miss: single-flight. Only one task fetches; the rest wait here
+        // and then see the freshly-populated cache on the re-check below.
+        let _guard = self.fetch_lock.lock().await;
+        {
+            let cache = self.cached_wallpaper.read().await;
+            if let Some((wallpaper, cached_at)) = cache.as_ref() {
+                if self.cache_is_fresh(cached_at) {
                     return Ok(wallpaper.clone());
                 }
             }

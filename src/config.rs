@@ -109,6 +109,20 @@ impl Config {
         Ok(config.try_deserialize()?)
     }
 
+    /// Load config from a TOML file only, WITHOUT merging `ONEPAGE__*`
+    /// environment overrides. The CLI uses this so editing links and saving
+    /// doesn't bake transient env values (e.g. a Docker-set port) into the file.
+    pub fn load_from_file(path: &str) -> anyhow::Result<Self> {
+        if !Path::new(path).exists() {
+            return Ok(Config::default());
+        }
+
+        let config = config::Config::builder()
+            .add_source(config::File::with_name(path))
+            .build()?;
+        Ok(config.try_deserialize()?)
+    }
+
     pub fn get_default_search_engine(&self) -> Option<&SearchEngine> {
         self.search_engines.iter().find(|e| e.default)
             .or_else(|| self.search_engines.first())
