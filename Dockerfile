@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files
-COPY Cargo.toml ./
+# Copy dependency manifests (include Cargo.lock for reproducible builds)
+COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 
 # Build dependencies cache layer
@@ -21,6 +21,12 @@ COPY src ./src
 COPY templates ./templates
 COPY static ./static
 
+# Remove the placeholder crate artifacts so the real sources actually recompile.
+# Without this, cargo's mtime-based fingerprint can decide the copied-in sources
+# aren't "newer" than the dummy build and skip recompilation — leaving the empty
+# `fn main() {}` binary in the final image. Dependency .rlibs stay cached.
+RUN rm -f target/release/onepage target/release/deps/onepage-*
+
 # Build release binary
 RUN cargo build --release
 
@@ -29,10 +35,12 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies.
+# wget is required by the HEALTHCHECK below — bookworm-slim does not ship it.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy binary and assets

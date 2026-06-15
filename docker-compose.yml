@@ -1,13 +1,19 @@
-version: '3.3'
-
 services:
   onepage:
     build: .
     container_name: onepage
     ports:
-      - "8080:8080"
+      # Publish only on the host loopback so the page is reachable at
+      # localhost:8080 but NOT from other devices on the LAN. The app inside
+      # the container still binds 0.0.0.0 (required for the port mapping).
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./onepage.toml:/app/config/onepage.toml:ro
+      # Mount templates/static so local UI edits show up without rebuilding the
+      # image. templates need a `docker compose restart` (Tera loads them once at
+      # startup); static JS/CSS is served per-request, so just refresh the page.
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
     environment:
       - RUST_LOG=info
       - CONFIG_PATH=/app/config/onepage.toml
