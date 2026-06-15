@@ -1,1 +1,5 @@
 /target
+
+# Local onepage.toml backups created during config edits
+onepage.toml.bak
+onepage.toml.pre-clean
