@@ -51,6 +51,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initZenMode();
 
+    // 分类卡片展开/收起：超过 6 条的链接默认收起，点击按钮展开
+    function initCategoryToggles() {
+        document.querySelectorAll('.cat-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const card = btn.closest('.glass');
+                if (!card) return;
+                const overflow = card.querySelectorAll('.cat-overflow');
+                const expanded = btn.dataset.expanded === 'true';
+                // expanded=false -> 当前收起，点击应展开（移除 hidden）
+                overflow.forEach(li => li.classList.toggle('hidden', expanded));
+                btn.dataset.expanded = (!expanded).toString();
+                const textEl = btn.querySelector('.cat-toggle-text');
+                const iconEl = btn.querySelector('.cat-toggle-icon');
+                if (textEl) textEl.textContent = expanded ? `展开全部 ${btn.dataset.count} 个` : '收起';
+                if (iconEl) iconEl.classList.toggle('rotate-180', !expanded);
+            });
+        });
+    }
+    initCategoryToggles();
+
     // 获取当前激活的搜索引擎 URL
     function getActiveEngineUrl() {
         const activeBtn = document.querySelector('.engine-btn[data-active="true"]');
