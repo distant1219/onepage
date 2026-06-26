@@ -1,0 +1,18 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="opTile" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F9D89"/>
+      <stop offset="1" stop-color="#2E6A5A"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角翡翠色底板 -->
+  <rect width="48" height="48" rx="12" fill="url(#opTile)"/>
+  <!-- 起始窗口（白色）—— 寓意浏览器首页 / Start Page -->
+  <rect x="13" y="14" width="22" height="20" rx="4" fill="#ffffff"/>
+  <!-- 标题栏（暖金）+ 窗口圆点 -->
+  <path d="M13 18a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4v1.5H13V18Z" fill="#C7AE81"/>
+  <circle cx="16.8" cy="16.7" r="1.1" fill="#ffffff"/>
+  <!-- 内容：首行聚焦（翡翠）+ 次行浅色 -->
+  <rect x="18" y="24.5" width="12" height="3" rx="1.5" fill="#4F9D89"/>
+  <rect x="18" y="29.5" width="8" height="2.2" rx="1.1" fill="#B9D2CA"/>
+</svg>

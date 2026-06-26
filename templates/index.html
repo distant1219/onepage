@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OnePage</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -127,9 +128,30 @@
         body.clear-wallpaper #wallpaperModeBtn svg {
             color: white;
         }
+
+        /* Zen Mode：搜索框默认隐藏，鼠标活动时淡入显示 */
+        body.zen-mode #searchPanel {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.45s ease, transform 0.45s ease;
+        }
+        body.zen-mode.reveal-search #searchPanel {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="bg-dark text-white min-h-screen relative overflow-x-hidden">
+    <script>
+        // 默认开启 Zen Mode（首屏即应用，避免内容闪烁）；用户已保存的选择优先
+        (function () {
+            var z = localStorage.getItem('zen_mode');
+            if (z === null || z === 'true') document.body.classList.add('zen-mode');
+            if (localStorage.getItem('clear_wallpaper') === 'true') document.body.classList.add('clear-wallpaper');
+        })();
+    </script>
     <!-- 动态背景 -->
     <div class="fixed inset-0 z-0">
         <div class="wallpaper absolute inset-0 bg-cover bg-center opacity-20"
@@ -152,9 +174,20 @@
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 animate-fade-in">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/30">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                    <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/30">
+                        <svg viewBox="0 0 48 48" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="opTile" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#4F9D89"/>
+                                    <stop offset="1" stop-color="#2E6A5A"/>
+                                </linearGradient>
+                            </defs>
+                            <rect width="48" height="48" rx="12" fill="url(#opTile)"/>
+                            <rect x="13" y="14" width="22" height="20" rx="4" fill="#ffffff"/>
+                            <path d="M13 18a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4v1.5H13V18Z" fill="#C7AE81"/>
+                            <circle cx="16.8" cy="16.7" r="1.1" fill="#ffffff"/>
+                            <rect x="18" y="24.5" width="12" height="3" rx="1.5" fill="#4F9D89"/>
+                            <rect x="18" y="29.5" width="8" height="2.2" rx="1.1" fill="#B9D2CA"/>
                         </svg>
                     </div>
                     <span class="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">OnePage</span>
@@ -197,7 +230,7 @@
 
         <!-- 搜索区域 -->
         <section class="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 search-section">
-            <div class="w-full max-w-3xl animate-slide-up">
+            <div id="searchPanel" class="w-full max-w-3xl animate-slide-up">
                 <!-- 搜索卡片 -->
                 <div class="glass rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/50 hover:shadow-primary/10 transition-shadow duration-500">
                     <!-- 搜索引擎选择 -->

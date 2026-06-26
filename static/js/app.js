@@ -29,10 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Zen Mode 功能
     function initZenMode() {
-        const isZenMode = localStorage.getItem('zen_mode') === 'true';
+        // 默认开启 Zen Mode：未保存过偏好时（null）默认为 true，否则尊重用户选择
+        const storedZen = localStorage.getItem('zen_mode');
+        const isZenMode = storedZen === null ? true : storedZen === 'true';
         if (isZenMode) {
             document.body.classList.add('zen-mode');
-            console.log('Zen mode: restored from localStorage');
+            console.log('Zen mode: default/restored ->', isZenMode);
         }
 
         if (zenModeBtn) {
@@ -42,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.toggle('zen-mode');
                 const isNowZenMode = document.body.classList.contains('zen-mode');
                 localStorage.setItem('zen_mode', isNowZenMode);
+                if (isNowZenMode) document.body.classList.remove('reveal-search');
                 console.log('Zen mode:', isNowZenMode ? 'ON' : 'OFF');
             });
             console.log('Zen mode: button initialized');
@@ -50,6 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     initZenMode();
+
+    // Zen Mode 下搜索框的"鼠标唤出"：默认隐藏；鼠标移动/点击/触摸时淡入，
+    // 静止 2.5s 后淡出（正在输入时不隐藏）。
+    function initZenReveal() {
+        let hideTimer;
+        const IDLE_MS = 2500;
+        const armHide = () => {
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => {
+                if (document.activeElement !== searchInput) {
+                    document.body.classList.remove('reveal-search');
+                }
+            }, IDLE_MS);
+        };
+        const reveal = () => {
+            if (!document.body.classList.contains('zen-mode')) return;
+            document.body.classList.add('reveal-search');
+            armHide();
+        };
+        document.addEventListener('mousemove', reveal);
+        document.addEventListener('mousedown', reveal);
+        document.addEventListener('touchstart', reveal, { passive: true });
+        if (searchInput) {
+            // 聚焦时保持可见；失焦后重新计时淡出
+            searchInput.addEventListener('focus', () => {
+                clearTimeout(hideTimer);
+                document.body.classList.add('reveal-search');
+            });
+            searchInput.addEventListener('blur', armHide);
+        }
+    }
+    initZenReveal();
 
     // 分类卡片展开/收起：超过 6 条的链接默认收起，点击按钮展开
     function initCategoryToggles() {
@@ -149,8 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 自动聚焦
-    setTimeout(() => searchInput.focus(), 100);
+    // 自动聚焦（Zen Mode 下不自动聚焦，让搜索框保持隐藏直到鼠标唤出）
+    if (!document.body.classList.contains('zen-mode')) {
+        setTimeout(() => searchInput.focus(), 100);
+    }
 
     // 快捷键处理 - 使用更可靠的方式
     document.addEventListener('keydown', (e) => {
@@ -170,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.toggle('zen-mode');
                 const isNowZenMode = document.body.classList.contains('zen-mode');
                 localStorage.setItem('zen_mode', isNowZenMode);
+                if (isNowZenMode) document.body.classList.remove('reveal-search');
                 console.log('Zen mode (keyboard):', isNowZenMode ? 'ON' : 'OFF');
                 return;
             }
