@@ -105,19 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 初始化：恢复上次使用的搜索引擎或设置默认
+    // 初始化：用回退链选出唯一目标引擎，再统一激活，确保任何配置/脏数据下
+    // 都恰好有一个引擎处于激活态（否则 performSearch 会因拿不到 URL 而静默失灵）。
+    //   1) 上次选择（仅当它仍匹配当前某个引擎，避免引擎被改名/删除后失效）
+    //   2) 模板标记的默认引擎（带 bg-gradient-to-r class）
+    //   3) 第一个引擎（配置里没有任何引擎标 default 时兜底）
+    // 用数组 find 按 dataset 精确比较，而非把 localStorage 值拼进 CSS 选择器，
+    // 防止脏数据（含引号等）触发 querySelector 抛异常、中断后续初始化。
     const savedEngine = localStorage.getItem('preferred_engine');
-    if (savedEngine) {
-        const savedBtn = document.querySelector(`.engine-btn[data-url="${savedEngine}"]`);
-        if (savedBtn) {
-            setActiveEngine(savedBtn);
-        }
-    } else {
-        // 设置默认激活的引擎
-        const defaultBtn = document.querySelector('.engine-btn.bg-gradient-to-r');
-        if (defaultBtn) {
-            defaultBtn.setAttribute('data-active', 'true');
-        }
+    const initialBtn =
+        (savedEngine && [...engineBtns].find(b => b.dataset.url === savedEngine)) ||
+        document.querySelector('.engine-btn.bg-gradient-to-r') ||
+        engineBtns[0];
+    if (initialBtn) {
+        setActiveEngine(initialBtn);
     }
 
     // 搜索功能
