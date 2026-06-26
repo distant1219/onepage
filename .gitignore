@@ -1,5 +1,9 @@
 /target
 
+# Personal config with your own bookmarks — keep it local, not in git.
+# A committed template lives at onepage.toml.example; copy it to onepage.toml.
+/onepage.toml
+
 # Local onepage.toml backups created during config edits
 onepage.toml.bak
 onepage.toml.pre-clean

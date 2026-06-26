@@ -7,7 +7,7 @@
 - **必应每日壁纸** - 自动获取并显示微软必应每日推荐壁纸
 - **多搜索引擎** - 支持 Google、Bing、百度、DuckDuckGo 等，可配置默认引擎
 - **分类快捷链接** - 按类别组织常用网站，网格化展示
-- **双时区显示** - 同时显示北京和美西时间
+- **多时区显示** - 可配置任意多个时区，每秒实时更新（默认北京 + 美西）
 - **毛玻璃效果** - 现代化的 UI 设计
 - **响应式布局** - 适配桌面和移动设备
 - **CLI 工具** - 命令行管理快捷链接
@@ -16,9 +16,15 @@
 
 ### 本地运行
 
-1. 确保已安装 Rust (1.75+)
+1. 确保已安装 Rust (1.86+)
 2. 克隆项目并进入目录
-3. 运行：
+3. 准备配置文件（仓库不含个人配置，从模板复制一份）：
+
+```bash
+cp onepage.toml.example onepage.toml
+```
+
+4. 运行：
 
 ```bash
 cargo run
@@ -31,6 +37,9 @@ cargo run
 #### 使用 Docker Compose（推荐）
 
 ```bash
+# 首次使用：从模板创建个人配置（onepage.toml 已被 .gitignore 忽略）
+cp onepage.toml.example onepage.toml
+
 # 构建并启动
 docker-compose up -d
 
@@ -44,12 +53,16 @@ docker-compose down
 #### 使用 Docker 命令
 
 ```bash
+# 首次使用：从模板创建个人配置
+cp onepage.toml.example onepage.toml
+
 # 构建镜像
 docker build -t onepage .
 
 # 运行容器
+# 端口只绑回环（127.0.0.1），避免暴露到局域网；去掉 "127.0.0.1:" 才对外开放。
 docker run -d \
-  -p 8080:8080 \
+  -p 127.0.0.1:8080:8080 \
   -v $(pwd)/onepage.toml:/app/config/onepage.toml:ro \
   --name onepage \
   onepage
@@ -140,7 +153,12 @@ OnePage 提供命令行工具管理快捷链接，无需手动编辑配置文件
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
 | `CONFIG_PATH` | 配置文件路径 | `onepage.toml` |
+| `ONEPAGE_ASSET_DIR` | 模板与静态资源根目录（不在项目根目录启动时设置） | `.` |
 | `RUST_LOG` | 日志级别 | `info` |
+
+> 任意配置项也可用 `ONEPAGE__` 前缀的环境变量覆盖（嵌套用 `__` 分隔），
+> 例如 `ONEPAGE__SERVER__PORT=9000`。注意：CLI 编辑链接时不读取这些覆盖，
+> 以免把临时的环境值写回 `onepage.toml`。
 
 ## 技术栈
 

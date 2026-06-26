@@ -8,6 +8,8 @@ services:
       # the container still binds 0.0.0.0 (required for the port mapping).
       - "127.0.0.1:8080:8080"
     volumes:
+      # onepage.toml is gitignored (personal bookmarks). On a fresh clone,
+      # create it first:  cp onepage.toml.example onepage.toml
       - ./onepage.toml:/app/config/onepage.toml:ro
       # Mount templates/static so local UI edits show up without rebuilding the
       # image. templates need a `docker compose restart` (Tera loads them once at

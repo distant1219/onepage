@@ -1,0 +1,94 @@
+# OnePage 配置模板
+#
+# 使用方法：复制本文件为 onepage.toml，再按需修改。
+#   cp onepage.toml.example onepage.toml
+#
+# 真实的 onepage.toml 已被 .gitignore 忽略，不会提交到仓库，
+# 这样你的个人书签不会被上传。配置文件路径可用环境变量 CONFIG_PATH 覆盖。
+
+[server]
+# 容器内需绑 0.0.0.0 才能让端口映射生效；想只允许本机访问，
+# 用 docker-compose 的 "127.0.0.1:8080:8080" 端口映射来限制，而非改这里。
+host = "0.0.0.0"
+port = 8080
+
+[bing]
+market = "zh-CN"        # 必应壁纸市场，如 zh-CN / en-US
+refresh_interval = 60   # 壁纸缓存刷新间隔（分钟）
+
+# ── 搜索引擎 ──────────────────────────────────────────────
+# 至少标一个 default = true；若都不标，会回退到列表第一个。
+[[search_engines]]
+name = "Google"
+url = "https://www.google.com/search?q="
+icon = "🔍"
+default = true
+
+[[search_engines]]
+name = "Bing"
+url = "https://www.bing.com/search?q="
+icon = "🔎"
+default = false
+
+[[search_engines]]
+name = "百度"
+url = "https://www.baidu.com/s?wd="
+icon = "🇧"
+default = false
+
+[[search_engines]]
+name = "DuckDuckGo"
+url = "https://duckduckgo.com/?q="
+icon = "🦆"
+default = false
+
+[[search_engines]]
+name = "GitHub"
+url = "https://github.com/search?q="
+icon = "🐙"
+default = false
+
+# ── 快捷链接分类 ──────────────────────────────────────────
+# 也可以用 CLI 管理，无需手动编辑：
+#   ./onepage link add "名称" "https://example.com" -i "🔗" -c "常用"
+# 每张卡片超过 6 条链接时，多出的部分会折叠在"展开全部"按钮后面。
+[[categories]]
+name = "常用"
+icon = "⭐"
+
+[[categories.links]]
+name = "GitHub"
+url = "https://github.com"
+icon = "🐙"
+
+[[categories.links]]
+name = "Hacker News"
+url = "https://news.ycombinator.com"
+icon = "📰"
+
+[[categories]]
+name = "开发"
+icon = "🛠️"
+
+[[categories.links]]
+name = "MDN Web Docs"
+url = "https://developer.mozilla.org"
+icon = "📚"
+
+[[categories.links]]
+name = "Rust 文档"
+url = "https://doc.rust-lang.org"
+icon = "🦀"
+
+# ── 时区 ──────────────────────────────────────────────────
+# 可配置任意多个；第一个为主时区（界面高亮）。tz 用 IANA 时区名，
+# 或填 "local" 表示使用服务器本地时区。
+[[timezones]]
+name = "北京"
+tz = "Asia/Shanghai"
+icon = "🇨🇳"
+
+[[timezones]]
+name = "美西"
+tz = "America/Los_Angeles"
+icon = "🇺🇸"
