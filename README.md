@@ -60,9 +60,10 @@ cp onepage.toml.example onepage.toml
 docker build -t onepage .
 
 # 运行容器
-# 端口只绑回环（127.0.0.1），避免暴露到局域网；去掉 "127.0.0.1:" 才对外开放。
+# 默认绑所有网卡，可通过 http://<服务器IP>:8080 访问。
+# 只想本机访问改成 -p 127.0.0.1:8080:8080；对公网暴露建议加反向代理/防火墙。
 docker run -d \
-  -p 127.0.0.1:8080:8080 \
+  -p 8080:8080 \
   -v $(pwd)/onepage.toml:/app/config/onepage.toml:ro \
   --name onepage \
   onepage

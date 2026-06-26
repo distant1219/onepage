@@ -3,10 +3,11 @@ services:
     build: .
     container_name: onepage
     ports:
-      # Publish only on the host loopback so the page is reachable at
-      # localhost:8080 but NOT from other devices on the LAN. The app inside
-      # the container still binds 0.0.0.0 (required for the port mapping).
-      - "127.0.0.1:8080:8080"
+      # Publish on all host interfaces (0.0.0.0) so the page is reachable from
+      # other machines via the host's IP, e.g. http://<server-ip>:8080.
+      # To restrict to this host only, change it to "127.0.0.1:8080:8080"
+      # (and put it behind a reverse proxy / firewall for public exposure).
+      - "0.0.0.0:8080:8080"
     volumes:
       # onepage.toml is gitignored (personal bookmarks). On a fresh clone,
       # create it first:  cp onepage.toml.example onepage.toml
